@@ -1,0 +1,39 @@
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: taskflow-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - taskflow_db:/app/data
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/tasks/', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000/api/tasks/
+    container_name: taskflow-frontend
+    restart: unless-stopped
+    ports:
+      - "5174:5173"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8000/api/tasks/
+
+volumes:
+  taskflow_db:
