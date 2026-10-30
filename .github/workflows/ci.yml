@@ -1,5 +1,5 @@
 
-name: TaskFlow CI
+name: TaskFlow CI and Docker Hub Publish
 
 on:
   push:
@@ -29,9 +29,10 @@ jobs:
         working-directory: backend
         run: python manage.py test tasks
 
-  docker-build:
+  docker-publish:
     runs-on: ubuntu-latest
     needs: backend-tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Check out repository
@@ -40,18 +41,28 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build backend image
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push backend image
         uses: docker/build-push-action@v6
         with:
           context: ./backend
-          push: false
-          tags: taskflow-backend:latest
+          push: true
+          tags: |
+            2ndjoy/taskflow-backend:latest
+            2ndjoy/taskflow-backend:${{ github.sha }}
 
-      - name: Build frontend image
+      - name: Build and push frontend image
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
-          push: false
+          push: true
           build-args: |
             VITE_API_URL=http://localhost:8000/api/tasks/
-          tags: taskflow-frontend:latest
+          tags: |
+            2ndjoy/taskflow-frontend:latest
+            2ndjoy/taskflow-frontend:${{ github.sha }}
