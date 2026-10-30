@@ -46,13 +46,55 @@ jobs:
               --build-arg VITE_API_URL=http://localhost:8000/api/tasks/ \
               -t taskflow-frontend:circleci ./frontend
 
+  docker-publish:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - checkout
+      - setup_remote_docker
+
+      - run:
+          name: Log in to Docker Hub
+          command: |
+            echo "$DOCKERHUB_TOKEN" | docker login \
+              -u "$DOCKERHUB_USERNAME" \
+              --password-stdin
+
+      - run:
+          name: Build and push backend image
+          command: |
+            docker build \
+              -t "$DOCKERHUB_USERNAME/taskflow-backend:latest" \
+              ./backend
+            docker push "$DOCKERHUB_USERNAME/taskflow-backend:latest"
+
+      - run:
+          name: Build and push frontend image
+          command: |
+            docker build \
+              --build-arg VITE_API_URL=http://localhost:8000/api/tasks/ \
+              -t "$DOCKERHUB_USERNAME/taskflow-frontend:latest" \
+              ./frontend
+            docker push "$DOCKERHUB_USERNAME/taskflow-frontend:latest"
+
+      - run:
+          name: Log out from Docker Hub
+          command: docker logout
+
 workflows:
   taskflow-ci:
     jobs:
       - backend-tests
+
       - build-backend:
           requires:
             - backend-tests
+
       - build-frontend:
           requires:
             - backend-tests
+
+      - docker-publish:
+          requires:
+            - build-backend
+            - build-frontend
