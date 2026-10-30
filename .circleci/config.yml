@@ -1,0 +1,58 @@
+
+version: 2.1
+
+jobs:
+  backend-tests:
+    docker:
+      - image: cimg/python:3.13
+    working_directory: ~/project
+    steps:
+      - checkout
+
+      - run:
+          name: Install backend dependencies
+          command: |
+            cd backend
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+
+      - run:
+          name: Run Django tests
+          command: |
+            cd backend
+            python manage.py test
+
+  build-backend:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build backend Docker image
+          command: |
+            docker build -t taskflow-backend:circleci ./backend
+
+  build-frontend:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build frontend Docker image
+          command: |
+            docker build \
+              --build-arg VITE_API_URL=http://localhost:8000/api/tasks/ \
+              -t taskflow-frontend:circleci ./frontend
+
+workflows:
+  taskflow-ci:
+    jobs:
+      - backend-tests
+      - build-backend:
+          requires:
+            - backend-tests
+      - build-frontend:
+          requires:
+            - backend-tests
