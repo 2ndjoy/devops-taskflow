@@ -102,34 +102,42 @@ function App() {
 
   // Load tasks only after the user is authenticated.
   useEffect(() => {
-    if (user) {
-      fetchTasks();
-    } else {
-      setTasks([]);
-      setLoading(false);
-    }
-  }, [user]);
+    if (!user) return;
 
-  async function fetchTasks() {
-    try {
-      setLoading(true);
-      setError("");
+    let cancelled = false;
 
-      const response = await apiRequest(API_URL);
+    async function loadTasks() {
+      try {
+        const response = await apiRequest(API_URL);
 
-      if (!response.ok) {
-        throw new Error("Could not load tasks.");
+        if (!response.ok) {
+          throw new Error("Could not load tasks.");
+        }
+
+        const data = await response.json();
+
+        if (!cancelled) {
+          setTasks(data);
+          setError("");
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Fetch tasks error:", err);
+          setError("Unable to load tasks. Check that Django is running.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-
-      const data = await response.json();
-      setTasks(data);
-    } catch (err) {
-      console.error("Fetch tasks error:", err);
-      setError("Unable to load tasks. Check that Django is running.");
-    } finally {
-      setLoading(false);
     }
-  }
+
+    loadTasks();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   // Login and registration.
   async function handleAuthSubmit(event) {
