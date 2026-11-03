@@ -26,6 +26,7 @@ services:
       context: ./frontend
       args:
         VITE_API_URL: http://localhost:8000/api/tasks/
+        VITE_AUTH_URL: http://localhost:8000/api/auth/
     container_name: taskflow-frontend
     restart: unless-stopped
     ports:
@@ -35,5 +36,6 @@ services:
     environment:
       VITE_API_URL: http://localhost:8000/api/tasks/
 
+      VITE_AUTH_URL: http://localhost:8000/api/auth/
 volumes:
   taskflow_db:
