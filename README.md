@@ -322,3 +322,16 @@ The application uses session authentication and CSRF protection. Ensure cookies 
 ## Learning purpose
 
 This repository is a practical learning project for applying Agile planning, Git workflows, full-stack development, package management, Docker-based environments, automated testing, and CI/CD pipeline concepts as part of SOFT806.
+
+## Code Review Workflow
+
+TaskFlow uses pull requests to review changes before merging them into the main branch.
+
+The review process includes:
+
+1. Create a feature branch for the change.
+2. Commit and push the changes to GitHub.
+3. Open a pull request targeting the main branch.
+4. Review the changed files and provide feedback.
+5. Check that GitHub Actions and CircleCI workflows pass.
+6. Merge the pull request after the review and required checks are complete.
